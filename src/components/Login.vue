@@ -39,7 +39,7 @@ export default {
       axios.post(BASE_URL + 'login',data)
       .then(res => {
         console.log(res);
-        if ( /*登录失败*/ res.data.code === 1) {
+        if ( /*登录失败*/ res.data.status === 1) {
           console.log("账号或密码错误");
           this.user.account = ''
           this.user.password = ''

@@ -66,67 +66,6 @@ export default {
     Monaco
   },
   methods: {
-    handleRemove(file, fileList) {
-      console.log(file, fileList);
-    },
-    handlePreview(file) {
-      console.log(file);
-
-    },
-    handleSuccess(response, file, fileList) {
-      console.log(response);
-      console.log(file);
-      let editorContent = response.content
-      this.$refs.monaco.changeEditor(editorContent)
-    },
-    uploadFile() {
-      // let editorContent = 'test'
-      // store.commit(SET_EDITOR_CONTENT, editorContent)
-      // this.$refs.monaco.changeEditor()
-    },
-    handleBeforeUpload(file) {
-      if (file.name.slice(-2) !== '.c') {
-        this.$alert('目前仅支持上传.c文件')
-        return false
-      }
-    },
-    handleError(err, file, fileList) {
-      this.$alert(err)
-    },
-    codeReview() {
-      let editorValue = this.$refs.monaco.getEditorValue()
-      // console.log(editorValue);
-
-      // 以下这段代码填入axios调用后端
-      let data = {
-        code: editorValue
-      }
-      axios.post(BASE_URL + '/file/codeReview',data)
-      // axios({
-      //   method: 'post',
-      //   url: 'http://localhost:16666/file/codeReview',
-      //   headers: {
-      //     'Content-Type': 'application/json'
-      //   },
-      //   data: data
-      // })
-      .then(res => {
-        console.log(res.data);
-        let str = res.data
-        let strList = str.split(/\n|\r\n/g,)
-        console.log(strList)
-        this.codeReviewMsgList = strList
-      })
-
-      this.codeReviewDialogVisible = true
-    },
-    handleClose(done) {
-      this.$confirm('确认关闭？')
-          .then(_ => {
-            done();
-          })
-          .catch(_ => {});
-    },
     jumpToStaticCodeAnalysis() {
       this.$router.push('/home/static-code-analysis')
     },
