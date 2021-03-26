@@ -32,9 +32,16 @@
           :visible.sync="codeReviewDialogVisible"
           width="70%"
           :before-close="handleClose">
-        <div v-for="msg in codeReviewMsgList" style="text-align: left; padding-left: 10%">
-          {{msg}}
-        </div>
+<!--        <div v-for="msg in codeReviewMsgList" style="text-align: left; padding-left: 10%">-->
+<!--          {{msg}}-->
+<!--        </div>-->
+        <el-input
+            placeholder="代码审查结果"
+            type="textarea"
+            :autosize="{ minRows: 10}"
+            v-model="codeReviewMsg"
+            :disabled="true">
+        </el-input>
         <span slot="footer" class="dialog-footer">
                 <el-button type="primary" @click="codeReviewDialogVisible = false">确 定</el-button>
               </span>
@@ -56,6 +63,7 @@ export default {
       fileUploadUrl: BASE_URL + 'file/upload',
       codeReviewDialogVisible: false,
       codeReviewMsgList: ['正在进行代码审核，请稍等...'],
+      codeReviewMsg: '',
     }
   },
   components: {
@@ -111,10 +119,10 @@ export default {
           // })
           .then(res => {
             console.log(res.data);
-            let str = res.data
-            let strList = str.split(/\n|\r\n/g,)
-            console.log(strList)
-            this.codeReviewMsgList = strList
+            this.codeReviewMsg = res.data
+            // let strList = str.split(/\n|\r\n/g,)
+            // console.log(strList)
+            // this.codeReviewMsgList = strList
           })
 
       this.codeReviewDialogVisible = true
