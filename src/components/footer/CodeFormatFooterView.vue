@@ -2,7 +2,7 @@
   <div>
     <el-row>
 
-      <el-col :span="12">
+      <el-col :span="8">
         <div>
           <el-upload
               class="upload-demo"
@@ -21,9 +21,15 @@
         </div>
       </el-col>
 
-      <el-col :span="12">
+      <el-col :span="8">
         <div>
           <el-button icon="el-icon-s-check" @click="codeFormat">代码风格优化</el-button>
+        </div>
+      </el-col>
+
+      <el-col :span="8">
+        <div>
+          <el-button icon="el-icon-download" @click="codeDownload" :disabled="downloadButtonDisabled">下载代码</el-button>
         </div>
       </el-col>
 
@@ -41,6 +47,7 @@ export default {
   data() {
     return {
       fileUploadUrl: BASE_URL + 'file/upload',
+      downloadButtonDisabled: true
     }
   },
   components: {
@@ -86,11 +93,20 @@ export default {
             if (res.data.status === C_COMPILE_ERROR) {
               this.$alert('请上传可编译通过代码')
             } else if(res.data.status === SUCCESS) {
+              this.downloadButtonDisabled = false
+              this.$notify({
+                title: '成功',
+                message: '代码已完成优化，可点击下载优化后代码',
+                type: 'success'
+              });
               this.$emit('setMonacoValue', res.data.code)
             } else {
               this.$alert('error status!')
             }
           })
+    },
+    codeDownload() {
+      window.location = BASE_URL + "file/download"
     },
   }
 }
