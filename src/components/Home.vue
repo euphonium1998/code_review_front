@@ -1,7 +1,7 @@
 <template>
   <div>
-    <el-container style="height: 700px; border: 1px solid #eee">
-      <el-aside width="200px" style="background-color: rgb(238, 241, 246)">
+    <el-container style="height: 1000px; border: 1px solid #eee" id="container">
+      <el-aside width="10%" style="background-color: rgb(238, 241, 246)">
         <el-menu :default-openeds="['1']">
           <el-submenu index="1">
             <template slot="title"><i class="el-icon-s-home"></i>功能</template>
@@ -51,6 +51,10 @@ import store from '@/store/index'
 import Monaco from "@/components/Monaco";
 import {BASE_URL} from "@/const";
 import {SET_EDITOR_CONTENT} from "@/store/mutation-types";
+
+window.onload = function() {
+  document.getElementById("container").style.height = (screen.height - 250).toString() + "px";
+};
 
 export default {
   name: "Home",

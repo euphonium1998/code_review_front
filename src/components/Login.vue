@@ -84,6 +84,6 @@ export default {
 .login-button {
   margin: auto;
   position: fixed;
-  left: 41%;
+  left: 45%;
 }
 </style>

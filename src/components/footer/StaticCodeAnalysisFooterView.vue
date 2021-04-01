@@ -37,7 +37,7 @@
 <!--          {{msg}}-->
 <!--        </div>-->
         <el-input
-            class="rt-input"
+            id="test111"
             placeholder="代码审查结果"
             type="textarea"
             :autosize="{ minRows: 10}"
@@ -141,10 +141,12 @@ export default {
 </script>
 
 <style scoped>
-input[disabled]{background:#fff;opacity:1;color:black;}
 
-.rt-input >>> input {
-  color: #F56C6C;
+.el-textarea.is-disabled /deep/ .el-textarea__inner {
+  color: red;
 }
 
+/*#test111 /deep/ {*/
+/*  color: red;*/
+/*}*/
 </style>

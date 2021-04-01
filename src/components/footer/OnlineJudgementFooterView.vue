@@ -1,6 +1,30 @@
 <template>
   <div>
-    <h1>OnlineJudgementFooterView</h1>
+    <el-row>
+      <el-col :span="6">
+        <div>
+
+        </div>
+      </el-col>
+
+      <el-col :span="6">
+        <div>
+
+        </div>
+      </el-col>
+
+      <el-col :span="6">
+        <div>
+
+        </div>
+      </el-col>
+
+      <el-col :span="6">
+        <div>
+
+        </div>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
