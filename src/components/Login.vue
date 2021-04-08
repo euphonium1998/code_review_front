@@ -56,6 +56,7 @@ export default {
           sessionStorage.setItem('user_info', JSON.stringify(res.data))
           console.log(sessionStorage.getItem('user_info'));
           store.commit(SET_USER_INFO, res.data)
+          console.log(store.state.userInfo);
           this.$message('登录成功')
           this.$router.push('/home')
         }
