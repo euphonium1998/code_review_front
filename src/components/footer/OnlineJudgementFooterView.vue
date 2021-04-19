@@ -33,12 +33,16 @@
     </el-row>
 
     <!--    upload dialog-->
-    <el-dialog title="新题目" :visible.sync="uploadVisible">
-      <el-form :label-position="labelPosition" :model="newQuestionForm" label-width="80px">
+    <el-dialog title="新题目"  :visible.sync="uploadVisible">
+      <el-form :label-position="labelPosition"
+               :model="newQuestionForm"
+               :rules="newFormRules"
+               ref="newQuestionForm"
+               label-width="80px">
 
         <el-row>
           <el-col :span="16">
-            <el-form-item label="题目名称">
+            <el-form-item label="题目名称" prop="name">
               <el-input v-model="newQuestionForm.name"
                         maxlength="20"
                         show-word-limit></el-input>
@@ -48,7 +52,7 @@
 
         <el-row>
           <el-col :span="24">
-            <el-form-item label="题目描述">
+            <el-form-item label="题目描述" prop="questionDescription">
               <el-input v-model="newQuestionForm.questionDescription"
                         type="textarea"></el-input>
             </el-form-item>
@@ -57,7 +61,7 @@
 
         <el-row>
           <el-col :span="24">
-            <el-form-item label="输入描述">
+            <el-form-item label="输入描述" prop="inputDescription">
               <el-input v-model="newQuestionForm.inputDescription"
                         type="textarea"></el-input>
             </el-form-item>
@@ -66,7 +70,7 @@
 
         <el-row>
           <el-col :span="24">
-            <el-form-item label="输出描述">
+            <el-form-item label="输出描述" prop="outputDescription">
               <el-input v-model="newQuestionForm.outputDescription"
                         type="textarea"></el-input>
             </el-form-item>
@@ -75,18 +79,18 @@
 
         <el-row>
           <el-col :span="12">
-            <el-form-item label="示例输入">
+            <el-form-item label="示例输入" prop="sampleInput">
               <el-input type="textarea" v-model="newQuestionForm.sampleInput"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="示例输出">
+            <el-form-item label="示例输出" prop="sampleOutput">
               <el-input type="textarea" v-model="newQuestionForm.sampleOutput"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-form-item v-for="(example, index) in newQuestionForm.testExamples"
+        <el-form-item v-for="(example, index) in newQuestionForm.samples"
                       :label="'测试案例' + index"
                       :key="index">
           <el-row>
@@ -109,7 +113,7 @@
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" @click="onSubmit">上传</el-button>
+          <el-button type="primary" @click="insertOneQuestion('newQuestionForm')">上传</el-button>
           <el-button @click="addTestExample">新增测试案例</el-button>
           <el-button @click="uploadVisible=false">取消</el-button>
         </el-form-item>
@@ -124,7 +128,7 @@
         <el-form-item label="作者">
           <el-row>
             <el-col :span="12">
-              <el-input disabled v-model="questionForm.writer"></el-input>
+              <el-input disabled v-model="questionForm.provider"></el-input>
             </el-col>
 
           </el-row>
@@ -293,12 +297,15 @@
 </template>
 
 <script>
-import store from "@/store";
+import store from "@/store/index";
+import axios from "axios";
+import {BASE_URL, SQL_ERROR, SUCCESS} from "@/const";
 
 export default {
   name: "OnlineJudgementFooterView",
   data() {
     return {
+      newQuestionFormValidator: true,
       uploadVisible: false,
       questionListVisible: false,
       resVisible: false,
@@ -307,19 +314,20 @@ export default {
       labelPosition: 'right',
       newQuestionForm: {
         name: '',
+        account: '',
         questionDescription: '',
         inputDescription: '',
         outputDescription: '',
         sampleInput: '',
         sampleOutput: '',
-        testExamples: [{
+        samples: [{
           input: '',
           output: ''
         }]
       },
       questionForm: {
         id: -1,
-        writer: 'Euphonium',
+        provider: 'Euphonium',
         name: 'hello',
         questionDescription: 'print hello world',
         inputDescription: 'bilibili',
@@ -343,6 +351,26 @@ export default {
         predictedOutput: '1 2 3',
         realOutput: '3 2 1',
         compileErr: 'compile err',
+      },
+      newFormRules: {
+        name: [
+          { required: true, message: '输入不能为空', trigger: 'blur' },
+        ],
+        questionDescription: [
+          { required: true, message: '输入不能为空', trigger: 'blur' },
+        ],
+        inputDescription: [
+          { required: true, message: '输入不能为空', trigger: 'blur' },
+        ],
+        outputDescription: [
+          { required: true, message: '输入不能为空', trigger: 'blur' },
+        ],
+        sampleInput: [
+          { required: true, message: '输入不能为空', trigger: 'blur' },
+        ],
+        sampleOutput: [
+          { required: true, message: '输入不能为空', trigger: 'blur' },
+        ],
       },
     }
   },
@@ -371,8 +399,8 @@ export default {
     describeQuestion() {
       this.descriptionVisible = true
     },
-    onSubmit() {
-      console.log(this.newQuestionForm);
+    insertOneQuestion(formName) {
+      // console.log(this.newQuestionForm);
       this.$confirm('是否确定上传新题目?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -382,12 +410,45 @@ export default {
         /*
         submit to database
          */
-        this.$message({
-          type: 'success',
-          message: '上传成功'
-        });
+        this.submitForm(formName)
+        if (!this.newQuestionFormValidator) {
+          return
+        }
+        if (!this.checkSampleCnt()) {
+          this.$message({
+            type: 'error',
+            message: '测试案例至少两个'
+          })
+          return
+        }
+
+        console.log(store.state.userInfo)
+        this.newQuestionForm.account = store.state.userInfo.account
+
+        axios.post(BASE_URL + '/question/insertOneQuestion', this.newQuestionForm)
+            .then(res => {
+              console.log(res.data);
+              if (res.data.status === SUCCESS) {
+                this.$message({
+                  type: 'success',
+                  message: '上传成功'
+                });
+              } else if (res.data.status === SQL_ERROR) {
+                this.$message({
+                  type: 'error',
+                  message: 'SQL ERROR'
+                });
+              } else {
+                this.$message({
+                  type: 'error',
+                  message: 'UNKNOWN ERROR'
+                });
+              }
+            }).catch(err => {
+              this.$alert(err);
+            })
         this.clearNewQuestionForm()
-        this.uploadVisible =false
+        this.uploadVisible = false
       }).catch(() => {
         this.$message({
           type: 'info',
@@ -397,14 +458,14 @@ export default {
       });
     },
     addTestExample() {
-      this.newQuestionForm.testExamples.push({
+      this.newQuestionForm.samples.push({
         input: '',
         output: '',
       })
     },
     clearNewQuestionForm() {
       this.newQuestionForm.name = ''
-      this.newQuestionForm.testExamples = [{
+      this.newQuestionForm.samples = [{
         input: '',
         output: ''}]
       this.newQuestionForm.questionDescription = ''
@@ -414,9 +475,9 @@ export default {
       this.newQuestionForm.sampleInput = ''
     },
     removeExample(example) {
-      let index = this.newQuestionForm.testExamples.indexOf(example)
+      let index = this.newQuestionForm.samples.indexOf(example)
       if (index !== -1) {
-        this.newQuestionForm.testExamples.splice(index, 1)
+        this.newQuestionForm.samples.splice(index, 1)
       }
     },
     chooseQuestionId(q) {
@@ -460,13 +521,33 @@ export default {
         compileErr: '',
       }
     },
+    submitForm(formName) {
+      this.$refs[formName].validate((valid, object) => {
+        if (valid) {
+          // this.$alert('submit!')
+          this.newQuestionFormValidator = true
+        } else {
+          this.$message({
+            type: 'error',
+            message: '请按表单格式填写'
+          })
+          this.newQuestionFormValidator = false;
+        }
+      });
+    },
+    resetForm(formName) {
+      this.$refs[formName].resetFields();
+    },
+    checkSampleCnt() {
+      return this.newQuestionForm.samples.length > 1
+    }
   },
   mounted() {
     //todo
     /*
     加载默认问题
      */
-    this.questionForm.writer = 'test'
+    this.questionForm.provider = 'test'
 
     //todo
     /*
