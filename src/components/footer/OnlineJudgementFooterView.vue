@@ -223,45 +223,44 @@
             </el-col>
           </el-row>
         </el-form-item>
+          <el-button type="primary" @click="getQuestionList">刷新题目列表</el-button>
+        <el-form-item>
+          <el-col>
+
+          </el-col>
+        </el-form-item>
 
       </el-form>
     </el-dialog>
 
     <!--   result -->
     <el-dialog title="提交结果" :visible.sync="resVisible">
-      <el-form :model="onlineJudgeRes">
-        <el-form-item v-show="!onlineJudgeRes.isSubmit">
-          <el-row>
-            <el-col style="font-size: 17px">
-              您还未提交题目, 请先提交题目
-            </el-col>
-          </el-row>
-        </el-form-item>
-        <el-form-item v-show="onlineJudgeRes.isSubmit">
+      <el-form :model="onlineJudgeRes" :v-loading="onlineJudgeRes.isLoading">
+        <el-form-item>
           <el-row>
             <el-col :span="16" style="font-size: 17px; text-align:left">
               题目名称： {{onlineJudgeRes.name}}
             </el-col>
           </el-row>
         </el-form-item>
-        <el-form-item v-show="onlineJudgeRes.isSubmit">
+        <el-form-item>
           <el-row style="font-size: 17px; text-align:left">
             <el-col :span="8">
-              时间： {{onlineJudgeRes.runtime}}
+              时间： {{onlineJudgeRes.runtime}}ms
             </el-col>
             <el-col :span="8">
-              内存： {{onlineJudgeRes.memoryUsage}}
+              内存： {{onlineJudgeRes.memoryUsage}}MB
             </el-col>
           </el-row>
         </el-form-item>
-        <el-form-item v-show="onlineJudgeRes.isCompileErr">
+        <el-form-item>
           <el-row>
             <el-col :span="24">
-              <el-input class="to-red" type="textarea" disabled v-model="onlineJudgeRes.compileErr"></el-input>
+              <el-input class="to-red" type="textarea" disabled v-model="onlineJudgeRes.compileMsg"></el-input>
             </el-col>
           </el-row>
         </el-form-item>
-        <el-form-item v-show="onlineJudgeRes.isSubmit && !onlineJudgeRes.isCompileErr && !onlineJudgeRes.isPass">
+        <el-form-item v-show="!onlineJudgeRes.isCompileErr && !onlineJudgeRes.isPass">
           <el-row>
             <el-col :span="2">
               输入
@@ -281,13 +280,6 @@
             </el-col>
             <el-col :span="6">
               <el-input class="to-red" type="textarea" disabled v-model="onlineJudgeRes.realOutput"></el-input>
-            </el-col>
-          </el-row>
-        </el-form-item>
-        <el-form-item v-show="onlineJudgeRes.isPass">
-          <el-row>
-            <el-col style="font-size: 17px">
-              恭喜您，通过本道题的测试
             </el-col>
           </el-row>
         </el-form-item>
@@ -340,17 +332,16 @@ export default {
       },
       onlineJudgeRes: {
         id: -1,
-        name: 'test hh test',
-        isSubmit: true,
+        name: '',
         isPass: false,
+        isLoading: false,
         isCompileErr: false,
         memoryUsage: 'N/A',
         runtime: 'N/A',
-        //这只是测试
-        input: '1 2 3',
-        predictedOutput: '1 2 3',
-        realOutput: '3 2 1',
-        compileErr: 'compile err',
+        input: '',
+        predictedOutput: '',
+        realOutput: '',
+        compileMsg: '',
       },
       newFormRules: {
         name: [
@@ -389,7 +380,38 @@ export default {
     },
 
     onlineJudge() {
-
+      this.$emit('getMonacoValue')
+      let editorValue = store.state.editorContent
+      let data = {
+        qid: this.questionForm.id,
+        code: editorValue
+      }
+      this.onlineJudgeRes.isLoading = true
+      axios.post(BASE_URL + '/question/oj', data)
+          .then(res => {
+            this.onlineJudgeRes.isLoading = false
+            console.log(res.data)
+            this.onlineJudgeRes.name = res.data.name
+            this.onlineJudgeRes.compileMsg = res.data.status
+            if (res.data.status === 'wrong output') {
+              this.onlineJudgeRes.isPass = false
+              this.onlineJudgeRes.isCompileErr = false
+              this.onlineJudgeRes.input = res.data.input
+              this.onlineJudgeRes.realOutput = res.data.realOutput
+              this.onlineJudgeRes.predictedOutput = res.data.expectedOutput
+            } else if (res.data.status === 'Accepted') {
+              this.onlineJudgeRes.isPass = true
+              this.onlineJudgeRes.isCompileErr = false
+              this.onlineJudgeRes.runtime = (res.data.runTime / 1000000).toFixed(2)
+              this.onlineJudgeRes.memoryUsage = (res.data.memory / (1024 * 1024 * 8)).toFixed(2)
+            } else {
+              this.onlineJudgeRes.isPass = false
+              this.onlineJudgeRes.isCompileErr = true
+            }
+            this.OJFinishedNotify()
+          }).catch(err => {
+            this.$alert(err)
+      })
     },
 
     getOJResult() {
@@ -406,11 +428,10 @@ export default {
         cancelButtonText: '取消',
         type: 'info'
       }).then(() => {
-        //todo
         /*
         submit to database
          */
-        this.submitForm(formName)
+        console.log(this.submitForm(formName));
         if (!this.newQuestionFormValidator) {
           return
         }
@@ -481,7 +502,6 @@ export default {
       }
     },
     chooseQuestionId(q) {
-      //todo
       /*
       更新当前题目
       */
@@ -490,7 +510,7 @@ export default {
         cancelButtonText: '取消',
         type: 'info'
       }).then(() => {
-        //todo
+        this.getOneQuestion(q.id)
         /*
         换题请求
          */
@@ -510,7 +530,7 @@ export default {
       this.onlineJudgeRes = {
         id: -1,
         name: '',
-        isSubmit: false,
+        isLoading: false,
         isPass: false,
         isCompileErr: false,
         memoryUsage: 'N/A',
@@ -518,7 +538,7 @@ export default {
         input: '',
         predictedOutput: '',
         realOutput: '',
-        compileErr: '',
+        compileMsg: '',
       }
     },
     submitForm(formName) {
@@ -531,15 +551,56 @@ export default {
             type: 'error',
             message: '请按表单格式填写'
           })
-          this.newQuestionFormValidator = false;
+          this.newQuestionFormValidator = false
         }
       });
+      // console.log(flag);
     },
     resetForm(formName) {
       this.$refs[formName].resetFields();
     },
     checkSampleCnt() {
       return this.newQuestionForm.samples.length > 1
+    },
+    getOneQuestion(id) {
+      axios.get(BASE_URL + '/question/getQuestion', {
+        params: {
+          id: id
+        }
+      }).then(res => {
+        this.questionForm = {
+          id: res.data.id,
+          provider: res.data.accountName,
+          name: res.data.name,
+          questionDescription: res.data.questionDescription,
+          inputDescription: res.data.inputDescription,
+          outputDescription: res.data.outputDescription,
+          sampleInput: res.data.sampleInput,
+          sampleOutput: res.data.sampleOutput,
+        }
+      }).catch(err => {
+        this.$alert(err)
+      })
+    },
+    getQuestionList() {
+      this.questionList.questions = []
+      axios.get(BASE_URL + '/question/getQuestionList').then(res => {
+        res.data.forEach(item => {
+          this.questionList.questions.push({
+            id: item.id,
+            name: item.name
+          })
+        })
+      }).catch(err =>{
+        this.$alert(err)
+      })
+    },
+    OJFinishedNotify() {
+      this.$notify({
+        title: '成功',
+        message: '请点击右下角按钮查看结果',
+        type: 'success'
+      })
     }
   },
   mounted() {
@@ -547,24 +608,13 @@ export default {
     /*
     加载默认问题
      */
-    this.questionForm.provider = 'test'
+    this.getOneQuestion(1)
 
     //todo
     /*
     初始化题目列表
      */
-    this.questionList.questions.push({
-      id: 0,
-      name: 'test',
-    })
-    this.questionList.questions.push({
-      id: -1,
-      name: 'test',
-    })
-    this.questionList.questions.push({
-      id: 2,
-      name: 'test',
-    })
+    this.getQuestionList()
   }
 }
 </script>

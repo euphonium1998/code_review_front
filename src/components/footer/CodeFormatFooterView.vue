@@ -87,7 +87,7 @@ export default {
       let data = {
         code: editorValue
       }
-      axios.post(BASE_URL + '/file/codeFormat',data)
+      axios.post(BASE_URL + '/file/codeFormat', data)
           .then(res => {
             console.log(res.data);
             if (res.data.status === C_COMPILE_ERROR) {

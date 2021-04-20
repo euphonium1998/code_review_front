@@ -99,7 +99,6 @@ export default {
       this.$alert(err)
     },
     codeReview() {
-      //todo
       this.$emit('getMonacoValue')
       let editorValue = store.state.editorContent
       console.log(editorValue);
