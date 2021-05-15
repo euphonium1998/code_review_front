@@ -17,11 +17,11 @@
       <el-container>
         <el-header>
           <span>代码审查系统</span>
-          <el-dropdown class="dropdown">
-            <i class="el-icon-setting" style="margin-right: 20px; font-size: 16px">管理</i>
+          <el-dropdown class="dropdown" @command="handleCommand">
+            <i class="el-icon-setting" style="margin-right: 20px; font-size: 16px">{{getAccountName()}}</i>
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item>退出登录</el-dropdown-item>
-              <el-dropdown-item>修改密码</el-dropdown-item>
+              <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+              <el-dropdown-item command="modifyPassword">修改密码</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
         </el-header>
@@ -85,6 +85,31 @@ export default {
     },
     setMonacoValue(value) {
       this.$refs.monaco.changeEditor(value)
+    },
+    getAccountName() {
+      return store.state.userInfo.name
+    },
+    logout() {
+      this.$confirm('确定退出登录？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'info'
+      }).then(() => {
+        sessionStorage.removeItem('user_info')
+        this.$router.push('/login')
+      }).catch(() => {
+        //nothing to do
+      })
+    },
+    modifyPassword() {
+      console.log('modify');
+    },
+    handleCommand(command) {
+      if (command === 'logout') {
+        this.logout()
+      } else if (command === 'modifyPassword') {
+        this.modifyPassword()
+      }
     }
   }
 }
