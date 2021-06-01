@@ -399,6 +399,8 @@ export default {
               this.onlineJudgeRes.input = res.data.input
               this.onlineJudgeRes.realOutput = res.data.realOutput
               this.onlineJudgeRes.predictedOutput = res.data.expectedOutput
+              this.onlineJudgeRes.runtime = 'N/A'
+              this.onlineJudgeRes.memoryUsage = 'N/A'
             } else if (res.data.status === 'Accepted') {
               this.onlineJudgeRes.isPass = true
               this.onlineJudgeRes.isCompileErr = false
@@ -407,6 +409,8 @@ export default {
             } else {
               this.onlineJudgeRes.isPass = false
               this.onlineJudgeRes.isCompileErr = true
+              this.onlineJudgeRes.runtime = 'N/A'
+              this.onlineJudgeRes.memoryUsage = 'N/A'
             }
             this.OJFinishedNotify()
           }).catch(err => {
